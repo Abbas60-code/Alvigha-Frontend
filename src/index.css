@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-red: #590000;
+  --color-brand-dark: #2F0202;
+  --color-brand-accent: #E5CDAC; /* Used for subtitles and borders occasionally */
+  
+  --font-serif: "Cinzel", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-red text-white font-sans antialiased overflow-x-hidden;
+    /* Add a subtle dark red background pattern if possible, or build one with CSS. */
+    background-color: var(--color-brand-red);
+    background-image: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.15) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
