@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaEnvelope, FaLock, FaKey, FaSignInAlt, FaArrowRight } from 'react-icons/fa';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export default function AdminLogin() {
   const [step, setStep] = useState(1); // 1 = Credentials, 2 = OTP
   const [email, setEmail] = useState('');
@@ -18,7 +20,7 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/admin/send-otp', {
+      const response = await fetch(`${API_URL}/api/admin/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,7 +49,7 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/admin/verify-otp', {
+      const response = await fetch(`${API_URL}/api/admin/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
