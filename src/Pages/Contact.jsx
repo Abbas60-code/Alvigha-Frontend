@@ -30,16 +30,21 @@ export default function Contact() {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
       if (response.ok) {
         setStatus('success');
         setFormData({ name: '', email: '', phone: '', message: '' });
       } else {
-        const firstError = data.errors
-          ? Object.values(data.errors).flat()[0]
-          : (data.message || 'Something went wrong. Please try again.');
-        setErrorMsg(firstError);
+        if (data?.errors) {
+          setErrorMsg(Object.values(data.errors).flat()[0] || `Request failed (${response.status})`);
+        } else if (data?.message) {
+          setErrorMsg(`${data.message}`);
+        } else if (data) {
+          setErrorMsg(`Request failed (${response.status}): ${JSON.stringify(data)}`);
+        } else {
+          setErrorMsg(`Request failed (${response.status}). Something went wrong. Please try again.`);
+        }
         setStatus('error');
       }
     } catch (err) {
