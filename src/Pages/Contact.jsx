@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const SAFE_API_URL = API_URL.replace(/\/+$/, '');
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
@@ -22,7 +21,7 @@ export default function Contact() {
     setErrorMsg('');
 
     try {
-      const response = await fetch(`${SAFE_API_URL}/api/contact`, {
+      const response = await fetch(`${API_URL}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
