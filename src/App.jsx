@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './Components/Navbar';
 import Footer from './Components/Footer';
 import CartDrawer from './Components/CartDrawer';
 import SearchModal from './Components/SearchModal';
-import { FaWhatsapp, FaSearch, FaArrowUp } from 'react-icons/fa';
+import { FaWhatsapp, FaSearch, FaArrowUp, FaUserShield } from 'react-icons/fa';
 import { CartProvider } from './context/CartContext';
 import { MenuProvider } from './context/MenuContext';
 import MenuDrawer from './Components/MenuDrawer';
@@ -86,6 +86,21 @@ function AppShell() {
             className="fixed bottom-6 left-6 z-50 bg-black/60 hover:bg-black p-3 rounded-full text-white border border-white/20 shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-all transform hover:scale-110 cursor-pointer"
           >
             <FaSearch className="text-xl" />
+          </motion.button>
+
+          {/* Floating Admin Panel Button */}
+          <motion.button
+            onClick={() => window.location.href = '/admin/login'}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.4, type: 'spring', stiffness: 200 }}
+            title="Admin Panel"
+            className="fixed bottom-24 left-6 z-50 group flex items-center gap-2 bg-black/70 hover:bg-brand-red border border-white/20 hover:border-red-500/50 px-3 py-2.5 rounded-full text-white shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all transform hover:scale-105 cursor-pointer"
+          >
+            <FaUserShield className="text-lg flex-shrink-0" />
+            <span className="text-xs font-semibold max-w-0 overflow-hidden group-hover:max-w-[80px] transition-all duration-300 whitespace-nowrap opacity-0 group-hover:opacity-100">
+              Admin
+            </span>
           </motion.button>
 
           {/* Floating Right WhatsApp Button */}
