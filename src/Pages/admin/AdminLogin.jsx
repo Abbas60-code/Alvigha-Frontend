@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaEnvelope, FaLock, FaKey, FaSignInAlt, FaArrowRight } from 'react-icons/fa';
+import { RiMailLine, RiLockPasswordLine, RiKey2Line, RiArrowRightLine, RiLoginCircleLine, RiRestaurantLine } from 'react-icons/ri';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 const SAFE_API_URL = API_URL.replace(/\/+$/, '');
 
 export default function AdminLogin() {
-  const [step, setStep] = useState(1); // 1 = Credentials, 2 = OTP
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -23,15 +23,10 @@ export default function AdminLogin() {
     try {
       const response = await fetch(`${SAFE_API_URL}/api/admin/send-otp`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         setStep(2);
       } else {
@@ -52,15 +47,10 @@ export default function AdminLogin() {
     try {
       const response = await fetch(`${SAFE_API_URL}/api/admin/verify-otp`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ otp }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         localStorage.setItem('adminToken', data.token);
         navigate('/admin');
@@ -75,157 +65,95 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-brand-red/80 to-black flex items-center justify-center relative overflow-hidden font-sans">
-      {/* Background accents matching AdminLayout */}
-      <div className="pointer-events-none absolute inset-0 opacity-40 mix-blend-screen">
-        <div className="absolute -top-40 -left-32 w-96 h-96 rounded-full bg-red-500/40 blur-3xl animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] rounded-full bg-amber-400/20 blur-3xl" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-20" />
-      </div>
+    <div className="min-h-screen bg-brand-dark flex items-center justify-center relative overflow-hidden font-sans">
+      
+      {/* Background pattern similar to website */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.4) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+
+      {/* Background Orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-red/40 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[30rem] h-[30rem] bg-brand-accent/10 rounded-full blur-[120px] pointer-events-none" />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md relative z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-sm relative z-10"
       >
-        <div className="bg-black/60 border border-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-[0_0_50px_rgba(220,38,38,0.15)] relative overflow-hidden">
-          {/* Subtle top glow line */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50" />
-
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Admin Access</h1>
-            <p className="text-gray-400 text-sm">Secure login for Alvigha management</p>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-brand-red border border-brand-accent/40 flex items-center justify-center shadow-[0_0_30px_rgba(229,205,172,0.2)] mb-5">
+            <RiRestaurantLine className="text-brand-accent text-3xl" />
           </div>
+          <h1 className="text-3xl font-serif font-bold text-brand-accent tracking-wide">Alvigha</h1>
+          <p className="text-white/60 text-xs mt-2 uppercase tracking-widest font-bold">Admin Portal</p>
+        </div>
+
+        <div className="bg-brand-red/40 border border-brand-accent/30 rounded-3xl p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
+          {/* Subtle top glow */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-brand-accent/60 to-transparent" />
 
           {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6 text-sm text-center"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-500/20 border border-red-500/40 text-red-200 px-4 py-3 rounded-xl mb-6 text-xs text-center font-bold">
               {error}
             </motion.div>
           )}
 
           <AnimatePresence mode="wait">
             {step === 1 ? (
-              <motion.form
-                key="step1"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                onSubmit={handleCredentialsSubmit}
-                className="space-y-5"
-              >
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 uppercase tracking-wider mb-2 ml-1">
-                    Email Address
-                  </label>
+              <motion.form key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleCredentialsSubmit} className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-brand-accent uppercase tracking-widest ml-1 font-bold">Email Address</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                      <FaEnvelope />
-                    </div>
+                    <RiMailLine className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50" />
                     <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
+                      type="email" required
+                      value={email} onChange={e => setEmail(e.target.value)}
                       placeholder="admin@alvigha.com"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all shadow-inner"
+                      className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-brand-accent/50 transition-colors"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 uppercase tracking-wider mb-2 ml-1">
-                    Password
-                  </label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-brand-accent uppercase tracking-widest ml-1 font-bold">Password</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                      <FaLock />
-                    </div>
+                    <RiLockPasswordLine className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50" />
                     <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
+                      type="password" required
+                      value={password} onChange={e => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all shadow-inner"
+                      className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-brand-accent/50 transition-colors"
                     />
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full group relative flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-brand-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-red-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:shadow-[0_0_25px_rgba(220,38,38,0.6)]"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      Continue <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
+                <button type="submit" disabled={loading} className="w-full mt-6 flex justify-center items-center gap-2 py-3 bg-brand-accent text-brand-dark rounded-xl text-sm font-bold hover:brightness-110 transition-all shadow-[0_0_15px_rgba(229,205,172,0.3)] disabled:opacity-70 cursor-pointer">
+                  {loading ? 'Authenticating...' : <>Continue <RiArrowRightLine /></>}
                 </button>
               </motion.form>
             ) : (
-              <motion.form
-                key="step2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                onSubmit={handleOtpSubmit}
-                className="space-y-6"
-              >
-                <div className="text-center text-sm text-gray-300 mb-2">
-                  We&apos;ve sent a 6-digit confirmation code to your email.
+              <motion.form key="step2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleOtpSubmit} className="space-y-6">
+                <div className="text-center text-xs text-white/70 mb-2 leading-relaxed">
+                  We sent a 6-digit verification code to<br/>
+                  <span className="text-brand-accent font-bold mt-1 inline-block">{email}</span>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 uppercase tracking-wider mb-2 ml-1 text-center">
-                    Enter Verification Code
-                  </label>
-                  <div className="relative max-w-[200px] mx-auto">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                      <FaKey />
-                    </div>
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      required
-                      maxLength={6}
-                      placeholder="123456"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-center tracking-[0.5em] font-mono text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all shadow-inner text-lg"
-                    />
-                  </div>
+                <div className="relative max-w-[220px] mx-auto">
+                  <RiKey2Line className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50" />
+                  <input
+                    type="text" required maxLength={6}
+                    value={otp} onChange={e => setOtp(e.target.value)}
+                    placeholder="123456"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-center tracking-[0.5em] font-mono font-bold text-white focus:outline-none focus:border-brand-accent/50 transition-colors"
+                  />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading || otp.length < 6}
-                  className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-green-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(22,163,74,0.4)]"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      Verify & Login <FaSignInAlt />
-                    </>
-                  )}
+                <button type="submit" disabled={loading || otp.length < 6} className="w-full flex justify-center items-center gap-2 py-3 bg-brand-accent text-brand-dark rounded-xl text-sm font-bold hover:brightness-110 transition-all shadow-[0_0_15px_rgba(229,205,172,0.3)] disabled:opacity-50 cursor-pointer">
+                  {loading ? 'Verifying...' : <>Verify & Access <RiLoginCircleLine className="text-lg" /></>}
                 </button>
 
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="text-xs text-gray-400 hover:text-white transition-colors"
-                  >
-                    Back to credentials
-                  </button>
-                </div>
+                <button type="button" onClick={() => setStep(1)} className="w-full text-center text-[11px] text-white/50 hover:text-brand-accent transition-colors pt-2 uppercase tracking-widest font-bold cursor-pointer">
+                  Use a different account
+                </button>
               </motion.form>
             )}
           </AnimatePresence>

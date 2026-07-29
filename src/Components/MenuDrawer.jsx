@@ -65,6 +65,14 @@ export default function MenuDrawer() {
               >
                 Contact Us
               </Link>
+              
+              <Link 
+                to="/login"
+                className="w-full bg-brand-red text-white border border-brand-red font-bold tracking-widest uppercase py-3 rounded-full hover:bg-red-900 transition-colors text-sm cursor-pointer text-center mt-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Login / Register
+              </Link>
 
             </div>
           </motion.div>

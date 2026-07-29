@@ -1,7 +1,7 @@
 import React from 'react';
 import { categories } from '../data';
 
-export default function CategoryNav() {
+export default function CategoryNav({ extraCategories = [] }) {
   const handleScroll = (id) => {
     const element = document.getElementById(id);
     if (element) {
@@ -9,10 +9,12 @@ export default function CategoryNav() {
     }
   };
 
+  const allCats = [...extraCategories, ...categories];
+
   return (
     <div className="sticky top-[52px] md:top-16 z-40 bg-black text-white text-[10px] sm:text-xs font-sans tracking-widest border-b border-white/20 whitespace-nowrap overflow-x-auto custom-scrollbar">
       <ul className="flex justify-center sm:justify-center items-center px-4 py-2 sm:py-3 gap-4 sm:gap-6 w-max mx-auto md:w-full">
-        {categories.map((cat, idx) => (
+        {allCats.map((cat, idx) => (
           <li 
             key={idx} 
             onClick={() => handleScroll(cat)}

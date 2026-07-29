@@ -1,12 +1,46 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { PiShoppingCartSimpleFill, PiListBold } from "react-icons/pi";
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { PiShoppingCartSimpleFill, PiListBold, PiUserCircleBold, PiSignOutBold } from "react-icons/pi";
 import { useCart } from '../context/CartContext';
 import { useMenu } from '../context/MenuContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   const { setIsCartOpen, cartCount } = useCart();
   const { setIsMenuOpen } = useMenu();
+  const navigate = useNavigate();
+
+  const [userInfo, setUserInfo] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('userInfo');
+    if (stored) {
+      setUserInfo(JSON.parse(stored));
+    }
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userInfo');
+    setUserInfo(null);
+    setDropdownOpen(false);
+    navigate('/login');
+  };
+
+  // Get first name only
+  const firstName = userInfo?.fullName?.split(' ')[0] || '';
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-black/90 text-white backdrop-blur-sm px-3 md:px-4 py-2 flex items-center justify-between font-sans border-b border-white/10 h-[52px] md:h-16">
@@ -26,6 +60,58 @@ export default function Navbar() {
 
       {/* Actions (Cart & Menu) */}
       <div className="flex items-center gap-2">
+        
+        {/* User Section */}
+        <div className="relative" ref={dropdownRef}>
+          {userInfo ? (
+            /* Logged In: Show name with dropdown */
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-1 sm:gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-2 sm:px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+            >
+              <PiUserCircleBold size={20} className="text-brand-accent" />
+              <span className="hidden sm:inline text-sm font-semibold text-brand-accent">
+                {firstName}
+              </span>
+            </button>
+          ) : (
+            /* Not Logged In: Show icon link */
+            <Link
+              to="/login"
+              className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+              title="Login / Register"
+            >
+              <PiUserCircleBold size={26} className="text-gray-300" />
+            </Link>
+          )}
+
+          {/* Dropdown Menu */}
+          <AnimatePresence>
+            {dropdownOpen && userInfo && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-2 w-52 bg-black/95 border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+              >
+                <div className="px-4 py-3 border-b border-white/10">
+                  <p className="text-xs text-gray-400">Logged in as</p>
+                  <p className="text-sm font-bold text-brand-accent truncate">{userInfo.fullName}</p>
+                  <p className="text-xs text-gray-500 truncate">{userInfo.email}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer"
+                >
+                  <PiSignOutBold size={16} />
+                  Logout
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         {/* Cart Button */}
         <button 
           onClick={() => setIsCartOpen(true)}

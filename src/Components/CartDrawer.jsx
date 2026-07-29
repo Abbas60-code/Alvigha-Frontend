@@ -1,30 +1,43 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { PiXBold, PiTrashBold, PiMinusBold, PiPlusBold } from 'react-icons/pi';
-import { FaWhatsapp } from 'react-icons/fa';
+
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CartDrawer() {
-  const { isCartOpen, setIsCartOpen, cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
+  const { isCartOpen, setIsCartOpen, cartItems, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
   const [orderType, setOrderType] = useState('delivery');
   const [deliveryArea, setDeliveryArea] = useState('');
+  const [isOrdering, setIsOrdering] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
 
-  const handleWhatsAppOrder = () => {
-    let message = "🍽️ *New Order from Alvigha Website*\n\n";
-    message += `*Type:* ${orderType.toUpperCase()}\n`;
-    if (orderType === 'delivery') {
-      message += `*Area:* ${deliveryArea || 'Not specified'}\n\n`;
-    } else {
-      message += `*Branch:* ${deliveryArea || 'Main Branch'}\n\n`;
+  const handlePlaceOrder = async () => {
+    setIsOrdering(true);
+
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:9000'}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cartItems.map(i => ({ id: i.id, title: i.title, price: i.price, qty: i.qty, image: i.image || '' })),
+          orderType,
+          area: deliveryArea,
+          totalAmount: cartTotal,
+          customerName: userInfo?.fullName || 'Guest',
+          userId: userInfo?._id || null,
+        }),
+      });
+      setOrderPlaced(true);
+      clearCart();
+      setDeliveryArea('');
+      setOrderType('delivery');
+    } catch (err) {
+      console.error('Order failed:', err);
+    } finally {
+      setIsOrdering(false);
     }
-    cartItems.forEach((item, idx) => {
-      message += `${idx + 1}. ${item.title} x${item.qty} — Rs. ${item.price * item.qty}\n`;
-    });
-    message += `\n💰 *Total: Rs. ${cartTotal.toLocaleString()}*`;
-    message += `\n\n📍 Please confirm ${orderType === 'delivery' ? 'delivery address' : 'pickup details'}.`;
-    
-    const encoded = encodeURIComponent(message);
-    window.open(`https://wa.me/923182141472?text=${encoded}`, '_blank');
   };
 
   return (
@@ -53,7 +66,7 @@ export default function CartDrawer() {
             <div className="p-4 sm:p-5 flex justify-between items-center border-b border-white/10 bg-black/40">
               <h2 className="text-lg sm:text-xl font-serif text-white tracking-widest uppercase">Your Cart</h2>
               <button 
-                onClick={() => setIsCartOpen(false)}
+                onClick={() => { setIsCartOpen(false); setOrderPlaced(false); }}
                 className="text-gray-400 hover:text-white transition-colors cursor-pointer"
               >
                 <PiXBold size={24} />
@@ -62,7 +75,21 @@ export default function CartDrawer() {
 
             {/* Content */}
             <div className="flex-grow p-4 sm:p-5 overflow-y-auto custom-scrollbar flex flex-col gap-3 sm:gap-4">
-              {cartItems.length === 0 ? (
+              {orderPlaced ? (
+                /* Thank You Screen */
+                <div className="flex-grow flex flex-col items-center justify-center text-center px-4 gap-4">
+                  <div className="text-6xl mb-2">🎉</div>
+                  <h3 className="text-2xl font-serif font-bold text-brand-accent">Thank You!</h3>
+                  <p className="text-white font-semibold text-lg">Your order has been placed.</p>
+                  <p className="text-gray-400 text-sm">We have received your order and will process it shortly.</p>
+                  <button
+                    onClick={() => { setIsCartOpen(false); setOrderPlaced(false); }}
+                    className="mt-4 px-6 py-2.5 bg-brand-accent text-brand-dark font-bold rounded-full text-sm hover:brightness-110 transition-all cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : cartItems.length === 0 ? (
                 <div className="flex-grow flex flex-col items-center justify-center text-gray-500">
                   <p className="text-lg">Your cart is empty.</p>
                   <p className="text-xs mt-2">Add some delicious items from the menu!</p>
@@ -102,7 +129,7 @@ export default function CartDrawer() {
             </div>
 
             {/* Footer actions */}
-            {cartItems.length > 0 && (
+            {cartItems.length > 0 && !orderPlaced && (
               <div className="p-4 sm:p-5 border-t border-white/10 bg-black/60 space-y-4">
                 <div className="space-y-1 text-sm sm:text-base">
                   <div className="flex justify-between items-center text-white">
@@ -173,17 +200,18 @@ export default function CartDrawer() {
                   </div>
                 </div>
 
+
+
                 <button 
-                  onClick={handleWhatsAppOrder}
-                  disabled={!deliveryArea}
+                  onClick={handlePlaceOrder}
+                  disabled={!deliveryArea || isOrdering}
                   className={`w-full mt-2 font-bold uppercase tracking-widest py-3 sm:py-3.5 rounded transition-all cursor-pointer text-sm sm:text-base flex items-center justify-center gap-2
-                    ${deliveryArea 
-                      ? 'bg-green-600 hover:bg-green-700 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)]' 
-                      : 'bg-green-600/50 text-white/70 cursor-not-allowed'
+                    ${deliveryArea && !isOrdering
+                      ? 'bg-brand-accent text-brand-dark hover:brightness-110 shadow-[0_0_15px_rgba(229,205,172,0.3)]'
+                      : 'bg-brand-accent/40 text-brand-dark/60 cursor-not-allowed'
                     }`}
                 >
-                  <FaWhatsapp className="text-lg" />
-                  Order via WhatsApp
+                  {isOrdering ? 'Placing Order...' : 'Place Order'}
                 </button>
               </div>
             )}

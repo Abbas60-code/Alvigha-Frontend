@@ -1,147 +1,190 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaBell, FaChartPie, FaCog, FaReceipt, FaUsers, FaUtensils, FaSignOutAlt } from 'react-icons/fa';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  RiDashboardLine, RiShoppingBag2Line, RiMailLine, RiMenuLine,
+  RiCalendarLine, RiSettings3Line, RiLogoutBoxLine, RiRestaurantLine,
+  RiMenuFoldLine, RiMenuUnfoldLine, RiBellLine, RiUser3Line
+} from 'react-icons/ri';
 
-const pulseGlow = 'shadow-[0_0_25px_rgba(248,113,113,0.35)]';
-
-const SECTIONS = [
-  { to: '/admin', label: 'Overview', icon: FaChartPie, end: true },
-  { to: '/admin/orders', label: 'Orders', icon: FaReceipt },
-  { to: '/admin/menu', label: 'Menu & Pricing', icon: FaUtensils },
-  { to: '/admin/reservations', label: 'Reservations', icon: FaUsers },
-  { to: '/admin/settings', label: 'Settings', icon: FaCog },
+const NAV = [
+  { to: '/admin',               label: 'Dashboard',    icon: RiDashboardLine,   end: true },
+  { to: '/admin/orders',        label: 'Orders',       icon: RiShoppingBag2Line },
+  { to: '/admin/inbox',         label: 'Inbox',        icon: RiMailLine },
+  { to: '/admin/menu',          label: 'Menu',         icon: RiRestaurantLine },
+  { to: '/admin/reservations',  label: 'Reservations', icon: RiCalendarLine },
+  { to: '/admin/settings',      label: 'Settings',     icon: RiSettings3Line },
 ];
 
 export default function AdminLayout() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (token !== 'admin_authenticated') {
-      navigate('/admin/login');
-    }
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setCollapsed(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!localStorage.getItem('adminToken')) navigate('/admin/login');
   }, [navigate]);
 
-  const handleLogout = () => {
+  const logout = () => {
     localStorage.removeItem('adminToken');
     navigate('/admin/login');
   };
 
+  const pageTitle = NAV.find(n => n.end
+    ? location.pathname === n.to
+    : location.pathname.startsWith(n.to))?.label || 'Admin';
+
   return (
-    <div className="min-h-screen pt-4 md:pt-6 bg-gradient-to-br from-black via-brand-red/80 to-black text-white font-sans relative overflow-hidden">
-      {/* Background accents */}
-      <div className="pointer-events-none fixed inset-0 opacity-40 mix-blend-screen">
-        <div className="absolute -top-40 -right-32 w-72 h-72 rounded-full bg-red-500/40 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-amber-400/30 blur-3xl" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-30" />
-      </div>
+    <div className="flex h-screen bg-brand-dark text-white font-sans overflow-hidden">
+      
+      {/* Background pattern similar to website */}
+      <div className="fixed inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.25) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-10">
-        {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 md:mb-8"
-        >
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-              Admin Panel
-            </h1>
-            <p className="mt-1 text-sm md:text-base text-gray-200/80 max-w-xl">
-              Manage Alvigha&apos;s menu, orders, reservations, and performance — with a consistent,
-              modern theme.
-            </p>
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ─── SIDEBAR ─────────────────────────────────── */}
+      <motion.aside
+        animate={{ 
+          width: collapsed ? 68 : 240,
+          x: window.innerWidth < 768 ? (mobileOpen ? 0 : -240) : 0
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="fixed md:relative h-full flex flex-col bg-brand-red border-r border-brand-accent/20 shrink-0 overflow-hidden z-40"
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-4 py-5 border-b border-brand-accent/20">
+          <div className="w-9 h-9 rounded-xl border border-brand-accent/50 bg-brand-dark flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(229,205,172,0.3)]">
+            <RiRestaurantLine className="text-brand-accent text-lg" />
           </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              className={`relative px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-xs md:text-sm font-semibold tracking-wide uppercase cursor-pointer transition-colors ${pulseGlow}`}
-            >
-              Live Service
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
-              </span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/15 text-xs md:text-sm font-medium cursor-pointer transition-colors">
-              <FaBell className="text-amber-300" />
-              Alerts
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 hover:bg-red-900/60 border border-white/15 text-xs md:text-sm font-medium cursor-pointer transition-colors text-red-400 hover:text-red-300"
-            >
-              <FaSignOutAlt />
-              Logout
-            </button>
-          </div>
-        </motion.header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr] gap-4 md:gap-6">
-          {/* Sidebar */}
-          <motion.aside
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="bg-black/40 border border-white/10 rounded-2xl p-3 md:p-4 backdrop-blur-md"
-          >
-            <nav className="space-y-1 text-sm">
-              {SECTIONS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) =>
-                      `w-full flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all border ${
-                        isActive
-                          ? `bg-brand-red/80 hover:bg-brand-red ${pulseGlow} border-red-300/60`
-                          : 'bg-white/5 hover:bg-white/10 border-white/5'
-                      }`
-                    }
-                  >
-                    <span className="text-sm">
-                      <Icon />
-                    </span>
-                    <span className="font-medium text-xs md:text-sm">{item.label}</span>
-                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-transparent" />
-                  </NavLink>
-                );
-              })}
-            </nav>
-
-            <div className="mt-4 md:mt-6 p-3 md:p-4 rounded-2xl bg-gradient-to-br from-white/5 via-black/60 to-black/80 border border-white/10 text-xs text-gray-100/90">
-              <p className="font-semibold mb-1 text-[11px] uppercase tracking-[0.18em] text-gray-300">
-                Tonight&apos;s Snapshot
-              </p>
-              <p className="text-sm">
-                Peak hours expected between <span className="font-semibold">9:00PM</span> and{' '}
-                <span className="font-semibold">12:30AM</span>. Keep an eye on delivery queue.
-              </p>
+          {!collapsed && (
+            <div className="overflow-hidden">
+              <p className="font-serif font-bold text-lg leading-none tracking-wide text-brand-accent">Alvigha</p>
+              <p className="text-[10px] text-white/70 mt-0.5 tracking-widest uppercase">Admin Panel</p>
             </div>
-          </motion.aside>
-
-          {/* Content */}
-          <div className="min-w-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25 }}
-              >
-                <Outlet />
-              </motion.div>
-            </AnimatePresence>
-          </div>
+          )}
         </div>
+
+        {/* Nav Links */}
+        <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+          {NAV.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group relative
+                ${isActive
+                  ? 'bg-brand-dark/60 text-brand-accent border border-brand-accent/20'
+                  : 'text-white/70 hover:bg-black/20 hover:text-white border border-transparent'
+                }`
+              }
+              onClick={() => { if(window.innerWidth < 768) setMobileOpen(false); }}
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-brand-accent rounded-r-full" />
+                  )}
+                  <Icon className={`text-[18px] shrink-0 ${isActive ? 'text-brand-accent' : ''}`} />
+                  {!collapsed && <span className="text-sm font-medium">{label}</span>}
+                  {collapsed && (
+                    <div className="absolute left-full ml-3 px-2.5 py-1 bg-brand-dark border border-brand-accent/30 rounded-lg text-xs text-brand-accent opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-xl">
+                      {label}
+                    </div>
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Bottom: collapse + logout */}
+        <div className="px-2 pb-4 border-t border-brand-accent/20 pt-3 space-y-1">
+          <button
+            onClick={() => setCollapsed(p => !p)}
+            className="hidden md:flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-white/70 hover:bg-black/20 hover:text-white transition-colors cursor-pointer"
+          >
+            {collapsed ? <RiMenuUnfoldLine className="text-[18px] shrink-0" /> : <RiMenuFoldLine className="text-[18px] shrink-0" />}
+            {!collapsed && <span className="text-sm font-medium">Collapse</span>}
+          </button>
+          <button
+            onClick={logout}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-colors cursor-pointer"
+          >
+            <RiLogoutBoxLine className="text-[18px] shrink-0" />
+            {!collapsed && <span className="text-sm font-medium">Logout</span>}
+          </button>
+        </div>
+      </motion.aside>
+
+      {/* ─── MAIN AREA ───────────────────────────────── */}
+      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
+
+        {/* Top Bar */}
+        <header className="h-14 bg-brand-red border-b border-brand-accent/20 flex items-center justify-between px-4 md:px-6 shrink-0 shadow-md">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setMobileOpen(true)}
+              className="md:hidden text-brand-accent hover:text-white transition-colors cursor-pointer p-1"
+            >
+              <RiMenuLine className="text-2xl" />
+            </button>
+            <h1 className="text-lg font-serif font-bold tracking-wide text-brand-accent truncate max-w-[120px] sm:max-w-none">{pageTitle}</h1>
+            <span className="hidden sm:block text-xs text-white/50 mt-1">/ Alvigha Restaurant</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-[11px] bg-brand-dark/60 text-brand-accent border border-brand-accent/40 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 bg-brand-accent rounded-full animate-pulse" />
+              Live
+            </div>
+            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white/80 hover:text-brand-accent transition-colors cursor-pointer border border-transparent hover:border-brand-accent/30">
+              <RiBellLine className="text-lg" />
+            </button>
+            <div className="w-8 h-8 rounded-full border border-brand-accent/50 bg-brand-dark flex items-center justify-center">
+              <RiUser3Line className="text-sm text-brand-accent" />
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-5 md:p-7">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="h-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );
 }
-

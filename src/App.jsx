@@ -20,8 +20,11 @@ import AdminMenu from './Pages/admin/AdminMenu';
 import AdminReservations from './Pages/admin/AdminReservations';
 import AdminSettings from './Pages/admin/AdminSettings';
 import AdminLogin from './Pages/admin/AdminLogin';
+import AdminInbox from './Pages/admin/AdminInbox';
 import NotFound from './Pages/NotFound';
 import ScrollToTop from './Components/ScrollToTop';
+import Login from './Pages/Login';
+import Register from './Pages/Register';
 
 function AppShell() {
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -55,12 +58,15 @@ function AppShell() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/ballroom" element={<Ballroom />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         <Route path="/admin/login" element={<AdminLogin />} />
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminOverview />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="inbox" element={<AdminInbox />} />
           <Route path="menu" element={<AdminMenu />} />
           <Route path="reservations" element={<AdminReservations />} />
           <Route path="settings" element={<AdminSettings />} />

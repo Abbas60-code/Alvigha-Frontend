@@ -1,220 +1,174 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import {
+  RiShoppingBag2Line, RiTimeLine, RiMoneyDollarCircleLine,
+  RiMailLine, RiArrowUpLine, RiArrowDownLine, RiRefreshLine
+} from 'react-icons/ri';
 
-const containerVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: 'easeOut',
-      when: 'beforeChildren',
-      staggerChildren: 0.08,
-    },
-  },
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
+
+function StatCard({ icon: Icon, label, value, sub, accent, delay }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4 }}
+      className="bg-brand-dark/60 border border-brand-accent/20 rounded-2xl p-5 flex items-start gap-4 hover:border-brand-accent/40 transition-colors shadow-lg"
+    >
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${accent}`}>
+        <Icon className="text-xl" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-white/60 uppercase tracking-widest">{label}</p>
+        <p className="text-2xl font-bold mt-1 text-brand-accent">{value}</p>
+        <p className="text-[11px] text-white/50 mt-0.5">{sub}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+const STATUS_PILL = {
+  pending:   'bg-amber-500/20 text-amber-300 border-amber-500/40',
+  confirmed: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+  preparing: 'bg-violet-500/20 text-violet-300 border-violet-500/40',
+  delivered: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+  cancelled: 'bg-red-500/20 text-red-300 border-red-500/40',
 };
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const pulseGlow = 'shadow-[0_0_25px_rgba(248,113,113,0.35)]';
 
 export default function AdminOverview() {
-  return (
-    <motion.section
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-4 md:space-y-6"
-    >
-      {/* KPI cards */}
-      <motion.div
-        variants={containerVariants}
-        className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"
-      >
-        {[
-          {
-            label: 'Live Orders',
-            value: '18',
-            sub: '+6 in last 15 min',
-            tone: 'from-red-500/80 to-red-400/80',
-          },
-          {
-            label: 'Table Occupancy',
-            value: '76%',
-            sub: 'Ballroom near capacity',
-            tone: 'from-amber-400/90 to-orange-500/80',
-          },
-          {
-            label: 'Avg. Prep Time',
-            value: '14 min',
-            sub: 'Target: under 18 min',
-            tone: 'from-emerald-400/80 to-emerald-500/60',
-          },
-          {
-            label: "Tonight's Revenue",
-            value: '₨ 142,800',
-            sub: 'Projected: 210,000+',
-            tone: 'from-sky-400/90 to-indigo-500/70',
-          },
-        ].map((card, idx) => (
-          <motion.div
-            key={idx}
-            variants={itemVariants}
-            className={`relative overflow-hidden rounded-2xl p-3 md:p-4 bg-gradient-to-br ${card.tone} border border-white/15 text-xs md:text-sm ${pulseGlow}`}
-          >
-            <div className="absolute inset-0 opacity-70 mix-blend-soft-light bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_60%)]" />
-            <div className="relative">
-              <p className="uppercase text-[10px] tracking-[0.2em] text-white/80 mb-1">
-                {card.label}
-              </p>
-              <p className="text-lg md:text-2xl font-extrabold tracking-tight">
-                {card.value}
-              </p>
-              <p className="mt-1 text-[11px] md:text-xs text-white/85">{card.sub}</p>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+  const [orders, setOrders] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-      {/* Charts / activity grid */}
-      <motion.div
-        variants={containerVariants}
-        className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr),minmax(0,1.3fr)] gap-4 md:gap-5"
-      >
-        {/* Service flow card */}
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [or, cr] = await Promise.all([
+        fetch(`${API_URL}/api/orders`),
+        fetch(`${API_URL}/api/contact`),
+      ]);
+      const ordersData = await or.json();
+      setOrders(Array.isArray(ordersData) ? ordersData : []);
+      const cd = cr.ok ? await cr.json() : [];
+      setContacts(Array.isArray(cd) ? cd : []);
+    } catch { } finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const total = orders.reduce((s, o) => s + (o.totalAmount || 0), 0);
+  const pending = orders.filter(o => o.status === 'pending').length;
+  const today = orders.filter(o => new Date(o.createdAt).toDateString() === new Date().toDateString()).length;
+
+  const stats = [
+    { icon: RiShoppingBag2Line, label: 'Total Orders',    value: orders.length,                sub: `${today} placed today`,          accent: 'bg-brand-red/50 text-brand-accent border-brand-accent/30', delay: 0 },
+    { icon: RiTimeLine,         label: 'Pending',          value: pending,                      sub: 'Awaiting processing',            accent: 'bg-amber-500/20 text-amber-300 border-amber-500/30', delay: 0.06 },
+    { icon: RiMoneyDollarCircleLine, label: 'Revenue',    value: `Rs ${total.toLocaleString()}`, sub: 'All-time earnings',             accent: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', delay: 0.12 },
+    { icon: RiMailLine,         label: 'Messages',         value: contacts.length,              sub: 'Contact form submissions',       accent: 'bg-violet-500/20 text-violet-300 border-violet-500/30', delay: 0.18 },
+  ];
+
+  return (
+    <div className="space-y-6">
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {stats.map((s, i) => <StatCard key={i} {...s} />)}
+      </div>
+
+      {/* Two-column row */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5">
+
+        {/* Recent Orders */}
         <motion.div
-          variants={itemVariants}
-          className="bg-black/50 border border-white/10 rounded-2xl p-4 md:p-5 backdrop-blur-lg"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.24 }}
+          className="bg-brand-dark/60 border border-brand-accent/20 rounded-2xl overflow-hidden shadow-lg"
         >
-          <div className="flex items-center justify-between mb-3 md:mb-4">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-brand-accent/20 bg-black/20">
             <div>
-              <h2 className="text-sm md:text-base font-semibold flex items-center gap-2">
-                Service Heatmap
-                <span className="text-[11px] text-gray-300/80 font-normal">
-                  (mock data for layout)
-                </span>
-              </h2>
-              <p className="text-xs text-gray-300/80">
-                Distribution of orders across dine-in, takeaway and delivery.
-              </p>
+              <p className="font-serif font-semibold text-lg text-brand-accent">Recent Orders</p>
+              <p className="text-[11px] text-white/50 mt-0.5 tracking-wide">Latest from the website</p>
             </div>
-            <select className="bg-black/40 border border-white/15 rounded-full text-[11px] px-3 py-1 cursor-pointer">
-              <option>Tonight</option>
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-            </select>
+            <button onClick={load} className="text-white/50 hover:text-brand-accent transition-colors cursor-pointer bg-white/5 p-2 rounded-lg border border-white/10 hover:border-brand-accent/30">
+              <RiRefreshLine className="text-lg" />
+            </button>
           </div>
 
-          {/* Faux bar chart */}
-          <div className="mt-3 md:mt-4 space-y-3 md:space-y-4">
-            {[
-              { label: 'Dine-In', color: 'bg-emerald-400', width: 'w-[78%]' },
-              { label: 'Delivery', color: 'bg-red-400', width: 'w-[64%]' },
-              { label: 'Takeaway', color: 'bg-amber-300', width: 'w-[48%]' },
-            ].map((row, idx) => (
-              <div key={idx} className="space-y-1">
-                <div className="flex justify-between text-[11px] text-gray-200">
-                  <span>{row.label}</span>
-                  <span>View details</span>
+          {loading ? (
+            <div className="py-16 text-center text-white/40 text-sm">Loading…</div>
+          ) : orders.length === 0 ? (
+            <div className="py-16 text-center text-white/40 text-sm">No orders yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-brand-accent/20 text-[11px] text-brand-accent uppercase tracking-wider bg-black/10">
+                    {['Customer', 'Type', 'Items', 'Total', 'Status', 'Date'].map(h => (
+                      <th key={h} className="text-left px-5 py-3 font-medium">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.slice(0, 6).map((o, i) => (
+                    <tr key={o._id} className={`border-b border-white/5 hover:bg-white/10 transition-colors ${i % 2 === 0 ? '' : 'bg-black/10'}`}>
+                      <td className="px-5 py-3 font-semibold text-white">{o.customerName || 'Guest'}</td>
+                      <td className="px-5 py-3">
+                        <span className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase ${o.orderType === 'delivery' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : 'bg-violet-500/20 text-violet-300 border-violet-500/30'}`}>
+                          {o.orderType}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-white/70 max-w-[160px] truncate">
+                        {o.items?.map(i => `${i.title}`).join(', ')}
+                      </td>
+                      <td className="px-5 py-3 text-brand-accent font-bold">Rs {o.totalAmount?.toLocaleString()}</td>
+                      <td className="px-5 py-3">
+                        <span className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase ${STATUS_PILL[o.status] || STATUS_PILL.pending}`}>
+                          {o.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-white/50">{new Date(o.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Recent Messages */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-brand-dark/60 border border-brand-accent/20 rounded-2xl overflow-hidden flex flex-col shadow-lg"
+        >
+          <div className="px-5 py-4 border-b border-brand-accent/20 bg-black/20">
+            <p className="font-serif font-semibold text-lg text-brand-accent">Recent Messages</p>
+            <p className="text-[11px] text-white/50 mt-0.5 tracking-wide">Contact form inbox</p>
+          </div>
+          <div className="flex-1 overflow-y-auto divide-y divide-white/5 bg-black/10">
+            {loading ? (
+              <p className="text-center text-white/40 text-sm py-10">Loading…</p>
+            ) : contacts.length === 0 ? (
+              <p className="text-center text-white/40 text-sm py-10">No messages.</p>
+            ) : contacts.slice(0, 6).map((c, i) => (
+              <div key={i} className="flex items-start gap-3 px-5 py-4 hover:bg-white/10 transition-colors">
+                <div className="w-9 h-9 rounded-full border border-brand-accent/40 bg-brand-red flex items-center justify-center text-brand-accent text-sm font-bold shrink-0">
+                  {(c.name || 'G')[0].toUpperCase()}
                 </div>
-                <div className="h-2.5 w-full rounded-full bg-white/5 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: row.width }}
-                    transition={{ duration: 0.9, delay: 0.15 * idx, ease: 'easeOut' }}
-                    className={`h-full rounded-full ${row.color} shadow-[0_0_15px_rgba(0,0,0,0.3)]`}
-                  />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-white truncate">{c.name}</p>
+                    <span className="text-[10px] text-white/40 shrink-0">{new Date(c.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-[11px] text-white/60 mt-0.5 truncate">{c.message}</p>
                 </div>
               </div>
             ))}
           </div>
         </motion.div>
-
-        {/* Live queue */}
-        <motion.div
-          variants={itemVariants}
-          className="bg-black/55 border border-white/10 rounded-2xl p-4 md:p-5 backdrop-blur-lg flex flex-col"
-        >
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <div>
-              <h2 className="text-sm md:text-base font-semibold">Live Kitchen Queue</h2>
-              <p className="text-xs text-gray-300/80">
-                Snapshot of orders currently in progress.
-              </p>
-            </div>
-            <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-300/40 text-emerald-200 font-medium">
-              Auto-refreshing
-            </span>
-          </div>
-
-          <div className="space-y-2.5 text-xs overflow-auto max-h-64 pr-1">
-            {[
-              {
-                id: '#ALV-184',
-                items: '2x Chicken Mandi, 1x Kunafa',
-                time: '08:42 PM',
-                eta: '7 min',
-                badge: 'Priority',
-                tone: 'border-amber-300/70',
-              },
-              {
-                id: '#ALV-185',
-                items: '1x Mix Grill, 2x Hummus',
-                time: '08:44 PM',
-                eta: '12 min',
-                badge: 'Dine-in',
-                tone: 'border-sky-300/70',
-              },
-              {
-                id: '#ALV-186',
-                items: '3x Chicken Mandi (Fam)',
-                time: '08:47 PM',
-                eta: '18 min',
-                badge: 'Delivery',
-                tone: 'border-emerald-300/70',
-              },
-              {
-                id: '#ALV-187',
-                items: '2x Alvigha Special Platter',
-                time: '08:49 PM',
-                eta: '20 min',
-                badge: 'Ballroom',
-                tone: 'border-fuchsia-300/70',
-              },
-            ].map((order, idx) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 * idx }}
-                className={`flex items-start gap-2 p-2.5 rounded-2xl bg-white/5 border ${order.tone}`}
-              >
-                <div className="mt-1 h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <p className="font-semibold text-[12px] tracking-wide">{order.id}</p>
-                    <span className="text-[10px] text-gray-300">{order.time}</span>
-                  </div>
-                  <p className="text-[11px] text-gray-100/90">{order.items}</p>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-gray-100 border border-white/15">
-                      {order.badge}
-                    </span>
-                    <span className="text-[10px] font-semibold text-emerald-300">
-                      ETA {order.eta}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </motion.div>
-    </motion.section>
+      </div>
+    </div>
   );
 }
-
