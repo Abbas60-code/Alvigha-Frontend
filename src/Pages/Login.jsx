@@ -38,6 +38,7 @@ export default function Login() {
 
       console.log('Login successful:', data);
       localStorage.setItem('userInfo', JSON.stringify(data));
+      window.dispatchEvent(new Event('authChange'));
       navigate('/');
     } catch (err) {
       setError(err.message);

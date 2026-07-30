@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { PiShoppingCartSimpleFill, PiListBold, PiUserCircleBold, PiSignOutBold } from "react-icons/pi";
 import { useCart } from '../context/CartContext';
 import { useMenu } from '../context/MenuContext';
@@ -9,17 +9,29 @@ export default function Navbar() {
   const { setIsCartOpen, cartCount } = useCart();
   const { setIsMenuOpen } = useMenu();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [userInfo, setUserInfo] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('userInfo');
-    if (stored) {
-      setUserInfo(JSON.parse(stored));
-    }
-  }, []);
+    const checkAuth = () => {
+      const stored = localStorage.getItem('userInfo');
+      if (stored) {
+        setUserInfo(JSON.parse(stored));
+      } else {
+        setUserInfo(null);
+      }
+    };
+    
+    checkAuth();
+    window.addEventListener('authChange', checkAuth);
+
+    return () => {
+      window.removeEventListener('authChange', checkAuth);
+    };
+  }, [location]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -34,6 +46,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
+    window.dispatchEvent(new Event('authChange'));
     setUserInfo(null);
     setDropdownOpen(false);
     navigate('/login');
@@ -70,7 +83,7 @@ export default function Navbar() {
               className="flex items-center gap-1 sm:gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-2 sm:px-3 py-1.5 rounded-full transition-colors cursor-pointer"
             >
               <PiUserCircleBold size={20} className="text-brand-accent" />
-              <span className="hidden sm:inline text-sm font-semibold text-brand-accent">
+              <span className="inline text-sm font-semibold text-brand-accent">
                 {firstName}
               </span>
             </button>

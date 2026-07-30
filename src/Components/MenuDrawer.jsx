@@ -1,12 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMenu } from '../context/MenuContext';
 import { PiXBold } from 'react-icons/pi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function MenuDrawer() {
   const { isMenuOpen, setIsMenuOpen } = useMenu();
+  const location = useLocation();
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const stored = localStorage.getItem('userInfo');
+      if (stored) {
+        setUserInfo(JSON.parse(stored));
+      } else {
+        setUserInfo(null);
+      }
+    };
+    
+    checkAuth();
+    window.addEventListener('authChange', checkAuth);
+
+    return () => {
+      window.removeEventListener('authChange', checkAuth);
+    };
+  }, [location]);
 
   return (
     <AnimatePresence>
@@ -66,13 +86,15 @@ export default function MenuDrawer() {
                 Contact Us
               </Link>
               
-              <Link 
-                to="/login"
-                className="w-full bg-brand-red text-white border border-brand-red font-bold tracking-widest uppercase py-3 rounded-full hover:bg-red-900 transition-colors text-sm cursor-pointer text-center mt-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Login / Register
-              </Link>
+              {!userInfo && (
+                <Link 
+                  to="/login"
+                  className="w-full bg-brand-red text-white border border-brand-red font-bold tracking-widest uppercase py-3 rounded-full hover:bg-red-900 transition-colors text-sm cursor-pointer text-center mt-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login / Register
+                </Link>
+              )}
 
             </div>
           </motion.div>
